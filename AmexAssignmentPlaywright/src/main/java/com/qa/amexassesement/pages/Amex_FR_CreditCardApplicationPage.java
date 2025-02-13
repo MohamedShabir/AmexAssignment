@@ -8,6 +8,10 @@ import org.testng.Assert;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.PlaywrightException;
+import com.microsoft.playwright.TimeoutError;
+import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.WaitForSelectorState;
 
 public class Amex_FR_CreditCardApplicationPage {
 
@@ -49,6 +53,7 @@ public class Amex_FR_CreditCardApplicationPage {
 	private String marketingSmsRadioBtn = "//label[@for='marketingSMSPhonePostalPreferences-OPT_OUT']";
 	private String confirmPage = "//button[normalize-space()='Fermez la Page']";
 	private String acceptAllCookies = "//button[contains(text(),'Tout Accepter')]";
+	private String cookiesMenu = "//h1[contains(text(),'American Express Préférences de Cookie')]";
 
 	// 2. page constructor:
 	public Amex_FR_CreditCardApplicationPage(Page page) {
@@ -58,17 +63,27 @@ public class Amex_FR_CreditCardApplicationPage {
 	// 3. page actions/methods:
 	
 //	Accept cookies
-	 public void acceptAllCookies() {
-		    // Wait for the "Accept All Cookies" button to appear and click it
-		    try {
-//		    	commonFunctions.fnWaitUntillElemVisible(acceptAllCookies);
-		        page.waitForSelector(acceptAllCookies, new Page.WaitForSelectorOptions().setTimeout(5000)); 
-		        page.click(acceptAllCookies);
-		        System.out.println("Accepted all cookies.");
-		    } catch (Exception e) {
-		        System.out.println("Cookie dialog box did not appear or could not be interacted with.");
-		    }
-		    }
+	
+	public void acceptAllCookies() {
+	    try {
+	        // Wait for the cookies dialog to appear
+	        page.waitForSelector(cookiesMenu, new Page.WaitForSelectorOptions().setState(WaitForSelectorState.VISIBLE));
+	        System.out.println("Cookies dialog is visible.");
+
+	        // Check if the "Accept All Cookies" button is visible
+	        Locator cookiesButton = page.locator(acceptAllCookies);
+	        if (cookiesButton.isVisible()) {
+	            // Click the "Accept All Cookies" button
+	            cookiesButton.click();
+	            System.out.println("Accepted all cookies.");
+	        } else {
+	            System.out.println("No cookies dialog box detected.");
+	        }
+	    } catch (PlaywrightException e) {
+	        System.out.println("Error interacting with the cookies dialog: " + e.getMessage());
+	    }
+	}
+	
 	public String getFRCardsPageURL() {
 		String url =  page.url();
 		System.out.println("page url : " + url);
@@ -91,21 +106,21 @@ public class Amex_FR_CreditCardApplicationPage {
 			Locator carteslnk = page.locator(cartesAmexCardlnk);
 			if (carteslnk.isVisible()) {
 				page.click(cartesAmexCardlnk);
-				System.out.println("Cartes American Express Link is clicked successfullyn");
+				System.out.println("Cartes American Express Link is clicked successfully");
 			} else {
 				System.out.println("Cartes American Express Link is NOT visible in the screen");
 			}
-		} catch (Exception e) {
+		} catch (PlaywrightException e) {
 			e.printStackTrace();
 		}
 	}
 
 	public void verifyFRAllCardsPage() {
 		try {
-			commonFunctions.fnWaitUntillElemVisible(lesCartesAmexTitle);
+			fnWaitUntilElemVisible(lesCartesAmexTitle);
 //		page.locator("//div[@class='richtext parbase']//div//h1//span//span[@class='heading-5']").first()
 //		 .waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE).setTimeout(40000));
-			commonFunctions.jsScrollToElement(enSaviourPlusBtn);
+//			jsScrollToElement(enSaviourPlusBtn);
 			Locator enSaviourLnk = page.locator(enSaviourPlusBtn);
 			if (enSaviourLnk.isVisible()) {
 				page.click(enSaviourPlusBtn);
@@ -122,9 +137,9 @@ public class Amex_FR_CreditCardApplicationPage {
 
 	public void verifyandClickDemandezVotreCarte() {
 		try {
-			commonFunctions.fnWaitUntillElemVisible(demandezVotreCarteBtn);
+			fnWaitUntilElemVisible(demandezVotreCarteBtn);
 			page.click(demandezVotreCarteBtn);
-			System.out.println("DemandezV otre Carte Link is clicked successfullyn");
+			System.out.println("DemandezV otre Carte Link is clicked successfully");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -167,7 +182,7 @@ public class Amex_FR_CreditCardApplicationPage {
 //	    }
 
 	public void fillUserDetails(List<Map<String, String>> userDetailsPages, List<String> continueButtonSelectors) {
-		commonFunctions.fnWaitUntillElemVisible(userDetailsTitle);
+		fnWaitUntilElemVisible(userDetailsTitle);
 		// Get the title of the page
 		String pageTitle = page.title();
 		// Expected title
@@ -263,7 +278,7 @@ public class Amex_FR_CreditCardApplicationPage {
 
 	public void ConfirmUserDetails() {
 		try {
-			commonFunctions.fnWaitUntillElemVisible(confirmPage);
+			fnWaitUntilElemVisible(confirmPage);
 			page.click(confirmPage);
 			Thread.sleep(10000);
 			page.click(confirmPage);
@@ -335,5 +350,40 @@ public class Amex_FR_CreditCardApplicationPage {
 //			}
 //		}
 //	}
+	
+	public void fnWaitUntilElemVisible(String selector) {
+	    try {
+	        System.out.println("⏳ Waiting for element to be visible: " + selector);
+
+	        Locator elementLocator = page.locator(selector);
+	        elementLocator.waitFor(new Locator.WaitForOptions()
+	                .setState(WaitForSelectorState.VISIBLE)
+	                .setTimeout(40000));
+
+	        System.out.println("✅ Element is now visible: " + selector);
+	    } catch (PlaywrightException e) {
+	        System.out.println("❌ Error: Element not found or not visible within timeout: " + selector);
+	    }
+	}
+
+	
+	public void jsScrollToElement(String selector) {
+	    try {
+	        System.out.println("⏳ Scrolling to element: " + selector);
+
+	        // Ensure element is present before scrolling
+	        Locator elementLocator = page.locator(selector);
+	        if (elementLocator.isVisible()) {
+	            page.evaluate("element => element.scrollIntoView({behavior: 'smooth', block: 'center'})", elementLocator);
+	            System.out.println("✅ Scrolling successful for element: " + selector);
+	        } else {
+	            System.out.println("❌ Element not found on the page: " + selector);
+	        }
+	    } catch (PlaywrightException e) {
+	        System.out.println("❌ Error: Failed to scroll to element: " + selector);
+	        e.printStackTrace();
+	    }
+	}
+
 
 }
