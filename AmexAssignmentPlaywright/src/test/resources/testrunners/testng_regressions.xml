@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+
+<suite name="Amex Fr All Cards Test Regression PW Suite" thread-count="5"
+	parallel="tests" verbose="4">
+	<listeners>
+		<listener
+			class-name="com.qa.amexassesement.listeners.ExtentReportListener" />
+	</listeners>
+	<test name="testCreditCardApplicationFlow_Chrome">
+		<parameter name="browser" value="chrome" /> 
+		<classes>
+			 <class name="com.qa.amexassesment.tests.AmexFRCreditCardApplicationTest" />
+        </classes>
+    </test>
+</suite>
